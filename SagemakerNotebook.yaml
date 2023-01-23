@@ -1,0 +1,78 @@
+
+Description: "Create basic notebook instance"
+Parameters:
+  NoteBookName:
+    Type: String
+    Description: Name of the notebook
+    Default: TempNotebook
+  VolumeSizeInGB:
+    Type: Number
+    Description: Amount of storage in GB to attach to notebook
+    Default: 5
+  InstanceType:
+    Type: String
+    Default: ml.t2.medium
+    AllowedValues:
+      - ml.t2.medium
+      - ml.t3.large
+      - ml.m5.xlarge
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - 
+        Label:
+          default: Base Configs
+        Parameters:
+          - NoteBookName
+          - VolumeSizeInGB
+          - InstanceType
+    ParameterLabels:
+      NoteBookName:
+        default: Name of Notebook
+      VolumeSizeInGB:
+        default: Storage Amount
+      InstanceType:
+        default: Instance Type
+Resources:
+  BasicNotebookInstance:
+    Type: "AWS::SageMaker::NotebookInstance"
+    Properties:
+      InstanceType: !Ref InstanceType 
+      NotebookInstanceName: !Ref NoteBookName
+      PlatformIdentifier: notebook-al2-v1
+      RoleArn: !GetAtt ExecutionRole.Arn
+      VolumeSizeInGB: !Ref VolumeSizeInGB
+  ExecutionRole: 
+    Type: "AWS::IAM::Role"
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Principal: 
+              Service: 
+                - "sagemaker.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Policies:
+        - PolicyName: EcrPermissions
+          PolicyDocument: {
+            "Version": "2012-10-17",
+            "Statement": {
+                "Effect": "Allow",
+                "Action": [
+                    "ecr:*"
+                ],
+                "Resource": [
+                    "*"
+                ]
+            }
+          }
+Outputs:
+  BasicNotebookInstanceId:
+    Value: !Ref BasicNotebookInstance
